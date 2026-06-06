@@ -1,6 +1,6 @@
 # 🌾 忘忧农场 (Wangyou Farm)
 
-一个基于 QQ 农场风格的网页种田游戏，使用 Node.js + MySQL 全栈开发。
+一个网页种田游戏，支持种植、浇水、收获、邮件系统等功能，使用 Node.js + MySQL 全栈开发。
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D16.0-green.svg)
