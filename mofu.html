@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>忘忧农场 - 管理后台</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; 
+      background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%); 
+      min-height:100vh; color:#fff;
+    }
+    
+    /* 登录框 */
+    .login-container {
+      display:flex; justify-content:center; align-items:center; min-height:100vh;
+    }
+    .login-box {
+      background:rgba(255,255,255,0.1); backdrop-filter:blur(10px);
+      border-radius:20px; padding:40px; width:100%; max-width:400px;
+      border:1px solid rgba(255,255,255,0.2); box-shadow:0 8px 32px rgba(0,0,0,0.3);
+    }
+    .login-box h2 { text-align:center; margin-bottom:30px; font-size:24px; }
+    .login-box h2 span { font-size:36px; display:block; margin-bottom:10px; }
+    .login-box input {
+      width:100%; padding:14px 16px; margin-bottom:16px; border:none;
+      border-radius:12px; font-size:16px; background:rgba(255,255,255,0.1);
+      color:#fff; border:1px solid rgba(255,255,255,0.2);
+    }
+    .login-box input::placeholder { color:rgba(255,255,255,0.5); }
+    .login-box input:focus { outline:none; border-color:#f093fb; }
+    .login-btn {
+      width:100%; padding:14px; border:none; border-radius:12px; font-size:16px;
+      font-weight:700; cursor:pointer; color:#fff;
+      background:linear-gradient(135deg,#f093fb,#f5576c);
+      transition:all 0.3s;
+    }
+    .login-btn:hover { transform:translateY(-2px); box-shadow:0 4px 20px rgba(240,147,251,0.4); }
+    .login-btn:active { transform:translateY(0); }
+    
+    /* 管理面板 */
+    .admin-container {
+      display:none; padding:20px; max-width:600px; margin:0 auto;
+    }
+    .admin-header {
+      text-align:center; padding:20px; margin-bottom:20px;
+      background:rgba(255,255,255,0.1); border-radius:16px;
+    }
+    .admin-header h2 { font-size:20px; }
+    .admin-header .logout {
+      margin-top:10px; padding:8px 16px; border:none; border-radius:8px;
+      background:rgba(255,255,255,0.2); color:#fff; cursor:pointer; font-size:14px;
+    }
+    .admin-card {
+      background:rgba(255,255,255,0.1); border-radius:16px; padding:20px;
+      margin-bottom:16px; border:1px solid rgba(255,255,255,0.1);
+    }
+    .admin-card h3 { font-size:16px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .admin-card h3 span { font-size:20px; }
+    
+    /* 表单元素 */
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-size:13px; color:rgba(255,255,255,0.7); margin-bottom:6px; }
+    .form-input {
+      width:100%; padding:12px 14px; border:none; border-radius:10px;
+      font-size:14px; background:rgba(255,255,255,0.1); color:#fff;
+      border:1px solid rgba(255,255,255,0.2);
+    }
+    .form-input:focus { outline:none; border-color:#f093fb; }
+    .form-input::placeholder { color:rgba(255,255,255,0.4); }
+    
+    select.form-input {
+      appearance:none; cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 12px center;
+    }
+    select.form-input option { background:#1a1a2e; color:#fff; }
+    
+    .search-row { display:flex; gap:10px; }
+    .search-row input { flex:1; }
+    .search-btn {
+      padding:12px 20px; border:none; border-radius:10px; font-size:14px;
+      font-weight:700; cursor:pointer; color:#fff; white-space:nowrap;
+      background:linear-gradient(135deg,#4facfe,#00f2fe);
+    }
+    
+    /* 玩家列表 */
+    .player-list { margin-top:12px; }
+    .player-item {
+      display:flex; align-items:center; padding:12px; margin-bottom:8px;
+      background:rgba(255,255,255,0.05); border-radius:10px; cursor:pointer;
+      border:2px solid transparent; transition:all 0.2s;
+    }
+    .player-item:hover { background:rgba(255,255,255,0.1); }
+    .player-item.selected { border-color:#f093fb; background:rgba(240,147,251,0.1); }
+    .player-item .avatar { font-size:28px; margin-right:12px; }
+    .player-item .info { flex:1; }
+    .player-item .info .name { font-weight:700; font-size:14px; }
+    .player-item .info .id { font-size:12px; color:rgba(255,255,255,0.5); }
+    
+    /* 物品预览 */
+    .item-preview {
+      display:flex; align-items:center; padding:12px; margin-top:12px;
+      background:rgba(76,175,80,0.2); border-radius:10px; border:1px solid rgba(76,175,80,0.3);
+    }
+    .item-preview .icon { font-size:32px; margin-right:12px; }
+    .item-preview .details { flex:1; }
+    .item-preview .details .name { font-weight:700; font-size:14px; }
+    .item-preview .details .desc { font-size:12px; color:rgba(255,255,255,0.6); }
+    
+    /* 发送按钮 */
+    .send-btn {
+      width:100%; padding:16px; border:none; border-radius:12px; font-size:16px;
+      font-weight:700; cursor:pointer; color:#fff; margin-top:16px;
+      background:linear-gradient(135deg,#43e97b,#38f9d7);
+      transition:all 0.3s;
+    }
+    .send-btn:hover { transform:translateY(-2px); box-shadow:0 4px 20px rgba(67,233,123,0.4); }
+    .send-btn:active { transform:translateY(0); }
+    .send-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    
+    /* 消息提示 */
+    .toast {
+      position:fixed; top:20px; left:50%; transform:translateX(-50%);
+      padding:12px 24px; border-radius:10px; font-size:14px; font-weight:700;
+      z-index:1000; animation:fadeInOut 2s;
+    }
+    .toast.success { background:linear-gradient(135deg,#43e97b,#38f9d7); color:#000; }
+    .toast.error { background:linear-gradient(135deg,#f093fb,#f5576c); color:#fff; }
+    
+    @keyframes fadeInOut {
+      0% { opacity:0; transform:translate(-50%,-20px); }
+      15% { opacity:1; transform:translate(-50%,0); }
+      85% { opacity:1; transform:translate(-50%,0); }
+      100% { opacity:0; transform:translate(-50%,-20px); }
+    }
+  </style>
+</head>
+<body>
+  <!-- 登录框 -->
+  <div id="loginContainer" class="login-container">
+    <div class="login-box">
+      <h2><span>🌾</span>忘忧农场管理后台</h2>
+      <input id="adminUser" class="form-input" placeholder="管理员账号" autocomplete="username">
+      <input id="adminPass" class="form-input" type="password" placeholder="密码" autocomplete="current-password">
+      <button class="login-btn" onclick="adminLogin()">🔐 登录</button>
+    </div>
+  </div>
+  
+  <!-- 管理面板 -->
+  <div id="adminContainer" class="admin-container">
+    <div class="admin-header">
+      <h2>🌾 忘忧农场管理后台</h2>
+      <button class="logout" onclick="adminLogout()">退出登录</button>
+    </div>
+    
+    <!-- 玩家搜索 -->
+    <div class="admin-card">
+      <h3><span>👤</span>选择玩家</h3>
+      <div class="search-row">
+        <input id="playerSearch" class="form-input" placeholder="输入玩家昵称或账号搜索" onkeyup="if(event.key==='Enter')searchPlayer()">
+        <button class="search-btn" onclick="searchPlayer()">🔍 搜索</button>
+      </div>
+      <div id="playerList" class="player-list"></div>
+    </div>
+    
+    <!-- 物品选择 -->
+    <div class="admin-card">
+      <h3><span>🎁</span>选择物品</h3>
+      <div class="form-group">
+        <label>物品类型</label>
+        <select id="itemType" class="form-input" onchange="onTypeChange()">
+          <option value="seed">🌱 种子（放背包）</option>
+          <option value="crop">📦 作物（放仓库）</option>
+          <option value="gold">💰 金币（加余额）</option>
+        </select>
+      </div>
+      <div id="cropGroup" class="form-group">
+        <label>选择物品</label>
+        <select id="cropSelect" class="form-input" onchange="onCropChange()">
+          <option value="">-- 请选择 --</option>
+        </select>
+      </div>
+      <div id="itemPreview" style="display:none"></div>
+      <div class="form-group">
+        <label>数量</label>
+        <input id="itemQty" class="form-input" type="number" value="1" min="1" max="9999">
+      </div>
+    </div>
+    
+    <!-- 发送邮件 -->
+    <div class="admin-card">
+      <h3><span>📧</span>邮件设置</h3>
+      <div class="form-group">
+        <label>邮件标题</label>
+        <input id="emailTitle" class="form-input" placeholder="例：🎁 管理员奖励">
+      </div>
+      <div class="form-group">
+        <label>邮件内容</label>
+        <input id="emailContent" class="form-input" placeholder="例：恭喜您获得管理员奖励~">
+      </div>
+      <button id="sendBtn" class="send-btn" onclick="sendEmail()" disabled>📤 发送邮件</button>
+    </div>
+  </div>
+  
+  <script>
+    const API = '/api';
+    let adminToken = localStorage.getItem('admin_token');
+    let selectedPlayer = null;
+    let selectedCrop = null;
+    let allCrops = [];
+    
+    // 检查是否已登录
+    if (adminToken) {
+      showAdminPanel();
+    }
+    
+    // 管理员登录
+    async function adminLogin() {
+      const username = document.getElementById('adminUser').value.trim();
+      const password = document.getElementById('adminPass').value.trim();
+      
+      if (!username || !password) {
+        showToast('请输入账号和密码', 'error');
+        return;
+      }
+      
+      try {
+        const r = await fetch(API + '/farm/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await r.json();
+        
+        if (data.code === 200) {
+          adminToken = data.data.token;
+          localStorage.setItem('admin_token', adminToken);
+          showAdminPanel();
+          showToast('登录成功', 'success');
+        } else {
+          showToast(data.message || '登录失败', 'error');
+        }
+      } catch (err) {
+        showToast('网络错误', 'error');
+      }
+    }
+    
+    // 显示管理面板
+    function showAdminPanel() {
+      document.getElementById('loginContainer').style.display = 'none';
+      document.getElementById('adminContainer').style.display = 'block';
+      loadCrops();
+    }
+    
+    // 退出登录
+    function adminLogout() {
+      adminToken = null;
+      localStorage.removeItem('admin_token');
+      document.getElementById('loginContainer').style.display = 'flex';
+      document.getElementById('adminContainer').style.display = 'none';
+    }
+    
+    // 加载作物列表
+    async function loadCrops() {
+      try {
+        const r = await fetch(API + '/farm/admin/crops', {
+          headers: { 'Authorization': 'Bearer ' + adminToken }
+        });
+        const data = await r.json();
+        if (data.code === 200) {
+          allCrops = data.data;
+          updateCropSelect();
+        }
+      } catch (err) {
+        console.error('加载作物失败:', err);
+      }
+    }
+    
+    // 更新作物下拉框
+    function updateCropSelect() {
+      const type = document.getElementById('itemType').value;
+      const select = document.getElementById('cropSelect');
+      const group = document.getElementById('cropGroup');
+      
+      if (type === 'gold') {
+        group.style.display = 'none';
+        document.getElementById('itemPreview').style.display = 'none';
+        selectedCrop = null;
+        updateSendBtn();
+        return;
+      }
+      
+      group.style.display = 'block';
+      select.innerHTML = '<option value="">-- 请选择 --</option>';
+      
+      // 按分类分组
+      const categories = {};
+      allCrops.forEach(c => {
+        if (!categories[c.category]) categories[c.category] = [];
+        categories[c.category].push(c);
+      });
+      
+      for (const [cat, crops] of Object.entries(categories)) {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = cat;
+        crops.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = (type === 'seed' ? c.seed_icon : c.stage3_icon || c.seed_icon) + ' ' + c.name;
+          optgroup.appendChild(opt);
+        });
+        select.appendChild(optgroup);
+      }
+      
+      selectedCrop = null;
+      document.getElementById('itemPreview').style.display = 'none';
+      updateSendBtn();
+    }
+    
+    // 类型变更
+    function onTypeChange() {
+      updateCropSelect();
+    }
+    
+    // 作物选择变更
+    function onCropChange() {
+      const cropId = document.getElementById('cropSelect').value;
+      const preview = document.getElementById('itemPreview');
+      
+      if (!cropId) {
+        selectedCrop = null;
+        preview.style.display = 'none';
+        updateSendBtn();
+        return;
+      }
+      
+      selectedCrop = allCrops.find(c => c.id == cropId);
+      if (selectedCrop) {
+        const type = document.getElementById('itemType').value;
+        const icon = type === 'seed' ? selectedCrop.seed_icon : (selectedCrop.stage3_icon || selectedCrop.seed_icon);
+        preview.innerHTML = '<div class="item-preview"><div class="icon">' + icon + '</div><div class="details"><div class="name">' + selectedCrop.name + '</div><div class="desc">分类：' + selectedCrop.category + ' | ID：' + selectedCrop.id + '</div></div></div>';
+        preview.style.display = 'block';
+      }
+      updateSendBtn();
+    }
+    
+    // 搜索玩家
+    async function searchPlayer() {
+      const q = document.getElementById('playerSearch').value.trim();
+      if (!q) {
+        showToast('请输入搜索关键词', 'error');
+        return;
+      }
+      
+      try {
+        const r = await fetch(API + '/farm/admin/search-player?q=' + encodeURIComponent(q), {
+          headers: { 'Authorization': 'Bearer ' + adminToken }
+        });
+        const data = await r.json();
+        const list = document.getElementById('playerList');
+        
+        if (data.code === 200 && data.data.length > 0) {
+          list.innerHTML = data.data.map(p => 
+            '<div class="player-item" onclick="selectPlayer(' + p.id + ', \'' + p.nickname + '\')">' +
+            '<div class="avatar">👤</div>' +
+            '<div class="info"><div class="name">' + p.nickname + '</div><div class="id">ID: ' + p.id + ' | 账号: ' + p.username + '</div></div>' +
+            '</div>'
+          ).join('');
+        } else {
+          list.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.5)">未找到玩家</div>';
+        }
+      } catch (err) {
+        showToast('搜索失败', 'error');
+      }
+    }
+    
+    // 选择玩家
+    function selectPlayer(id, nickname) {
+      selectedPlayer = { id, nickname };
+      document.querySelectorAll('.player-item').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      updateSendBtn();
+    }
+    
+    // 更新发送按钮状态
+    function updateSendBtn() {
+      const btn = document.getElementById('sendBtn');
+      const type = document.getElementById('itemType').value;
+      const qty = document.getElementById('itemQty').value;
+      const title = document.getElementById('emailTitle').value.trim();
+      
+      let valid = selectedPlayer && qty > 0 && title;
+      if (type !== 'gold' && !selectedCrop) valid = false;
+      
+      btn.disabled = !valid;
+    }
+    
+    // 监听输入变化
+    document.getElementById('itemQty').addEventListener('input', updateSendBtn);
+    document.getElementById('emailTitle').addEventListener('input', updateSendBtn);
+    
+    // 发送邮件
+    async function sendEmail() {
+      if (!selectedPlayer) {
+        showToast('请先选择玩家', 'error');
+        return;
+      }
+      
+      const type = document.getElementById('itemType').value;
+      const qty = parseInt(document.getElementById('itemQty').value) || 1;
+      const title = document.getElementById('emailTitle').value.trim();
+      const content = document.getElementById('emailContent').value.trim() || '管理员发送的奖励';
+      
+      let items;
+      if (type === 'gold') {
+        items = [{ type: 'gold', amount: qty, name: '金币' }];
+      } else if (type === 'seed') {
+        if (!selectedCrop) { showToast('请选择种子', 'error'); return; }
+        items = [{ type: 'seed', cropId: selectedCrop.id, quantity: qty, name: selectedCrop.name + '种子' }];
+      } else {
+        if (!selectedCrop) { showToast('请选择作物', 'error'); return; }
+        items = [{ type: 'crop', cropId: selectedCrop.id, quantity: qty, name: selectedCrop.name }];
+      }
+      
+      try {
+        const r = await fetch(API + '/farm/admin/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + adminToken
+          },
+          body: JSON.stringify({
+            userId: selectedPlayer.id,
+            title,
+            content,
+            type: 'reward',
+            items
+          })
+        });
+        const data = await r.json();
+        
+        if (data.code === 200) {
+          showToast('邮件发送成功！', 'success');
+          // 重置表单
+          document.getElementById('emailTitle').value = '';
+          document.getElementById('emailContent').value = '';
+          document.getElementById('itemQty').value = '1';
+          selectedPlayer = null;
+          document.querySelectorAll('.player-item').forEach(el => el.classList.remove('selected'));
+          updateSendBtn();
+        } else {
+          showToast(data.message || '发送失败', 'error');
+        }
+      } catch (err) {
+        showToast('网络错误', 'error');
+      }
+    }
+    
+    // 显示提示
+    function showToast(msg, type) {
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>忘忧农场</title>
+  <style>
+    :root { --fg:#4CAF50; --fdg:#388E3C; --fb:#8B4513; --fs:#5D4037; --st:#87CEEB; --sb:#E0F7FA; }
+    * { margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent; }
+    body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:linear-gradient(180deg,var(--st) 0%,var(--sb) 40%,#A5D6A7 60%,var(--fb) 100%); min-height:100vh; display:flex; justify-content:center; overflow-x:hidden; }
+    .gc { max-width:480px; width:100%; }
+    .header { background:linear-gradient(135deg,var(--fg),var(--fdg)); color:white; padding:14px 16px 12px; border-radius:0 0 16px 16px; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+    .ht { display:flex; justify-content:space-between; align-items:center; }
+    .header h1 { font-size:20px; text-shadow:0 2px 4px rgba(0,0,0,0.2); }
+    .lbtn { background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); color:white; padding:4px 12px; border-radius:16px; font-size:12px; cursor:pointer; }
+    .us { display:flex; justify-content:space-around; margin-top:10px; gap:8px; }
+    .si { background:rgba(255,255,255,0.18); padding:6px 14px; border-radius:20px; font-size:13px; font-weight:500; display:flex; align-items:center; gap:4px; }
+    .ebw { margin-top:8px; background:rgba(0,0,0,0.15); border-radius:10px; height:8px; overflow:hidden; }
+    .eb { height:100%; background:linear-gradient(90deg,#FFD700,#FFA000); border-radius:10px; transition:width 0.5s ease; }
+    .el { font-size:11px; text-align:right; margin-top:2px; opacity:0.85; }
+    .fa { margin:12px; background:linear-gradient(135deg,#6D4C2E,#5D4037); border-radius:16px; padding:12px; box-shadow:0 6px 20px rgba(0,0,0,0.25); border:2px solid #4E342E; }
+    .fg { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .land { aspect-ratio:1; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; border:2px solid rgba(0,0,0,0.15); position:relative; overflow:hidden; user-select:none; }
+    .land:active { transform:scale(0.93); }
+    .land.empty { background:linear-gradient(145deg,#795548,#5D4037); border-color:#4E342E; }
+    .land.planting { background:linear-gradient(145deg,#A5D6A7,#81C784); border-color:#66BB6A; }
+    .land.growing { background:linear-gradient(145deg,#66BB6A,#4CAF50); border-color:#43A047; }
+    .land.mature { background:linear-gradient(145deg,#FFD54F,#FFC107); border-color:#FFB300; animation:gp 1s infinite; }
+    .land.withered { background:linear-gradient(145deg,#BCAAA4,#A1887F); border-color:#8D6E63; opacity:0.7; }
+    .land .icon { font-size:28px; line-height:1; }
+    .land .cn { font-size:11px; font-weight:600; margin-top:2px; }
+    .land .li { position:absolute; bottom:3px; right:5px; font-size:9px; opacity:0.5; }
+    .land .pm { position:absolute; bottom:0; left:0; height:3px; background:linear-gradient(90deg,#4CAF50,#8BC34A); border-radius:0 0 10px 10px; transition:width 1s linear; }
+    .land.mature .pm { display:none; }
+    @keyframes gp { 0%,100%{box-shadow:0 0 8px rgba(255,193,7,0.3);} 50%{box-shadow:0 0 16px rgba(255,193,7,0.6);} }
+    .nb { display:flex; gap:10px; padding:12px; }
+    .nbtn { flex:1; padding:14px 8px; border:none; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; color:white; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .nbtn:active { transform:scale(0.95); }
+    .nbtn .bi { font-size:22px; }
+    .nbtn .bl { font-size:12px; }
+    .nbtn.s { background:linear-gradient(135deg,#2196F3,#1976D2); }
+    .nbtn.b { background:linear-gradient(135deg,#FF9800,#F57C00); }
+    .nbtn.w { background:linear-gradient(135deg,#9C27B0,#7B1FA2); }
+    .nbtn.lb { background:linear-gradient(135deg,#FFD700,#FFA000); }
+    .nbtn.fr { background:linear-gradient(135deg,#E91E63,#C2185B); }
+    .mo { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:flex-end; }
+    .mo.show { display:flex; }
+    .ms { background:white; border-radius:20px 20px 0 0; width:100%; max-width:480px; max-height:85vh; display:flex; flex-direction:column; animation:su 0.3s ease; }
+    @keyframes su { from{transform:translateY(100%);} to{transform:translateY(0);} }
+    .mh { width:40px; height:4px; background:#ddd; border-radius:4px; margin:10px auto; }
+    .mhd { display:flex; justify-content:space-between; align-items:center; padding:4px 20px 12px; border-bottom:1px solid #eee; }
+    .mhd h2 { font-size:18px; color:#333; }
+    .mc { width:32px; height:32px; background:#f5f5f5; border:none; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .mb { flex:1; overflow-y:auto; padding:12px 16px 20px; }
+    .ct { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; padding-bottom:4px; }
+    .ct::-webkit-scrollbar { display:none; }
+    .ctt { padding:6px 14px; border-radius:20px; border:1.5px solid #ddd; background:white; font-size:13px; cursor:pointer; white-space:nowrap; }
+    .ctt.a { background:var(--fg); color:white; border-color:var(--fg); }
+    .cc { display:flex; align-items:center; padding:12px; margin-bottom:8px; background:#f9f9f9; border-radius:12px; border:1px solid #eee; }
+    .ce { font-size:32px; margin-right:12px; }
+    .cd { flex:1; }
+    .cd .n { font-weight:700; font-size:15px; color:#333; }
+    .cd .m { font-size:12px; color:#888; margin-top:2px; }
+    .cd .pr { display:flex; gap:8px; margin-top:4px; flex-wrap:wrap; }
+    .pt { font-size:11px; padding:2px 8px; border-radius:10px; font-weight:600; }
+    .pb { background:#FFF3E0; color:#E65100; }
+    .ps { background:#E8F5E9; color:#2E7D32; }
+    .pti { background:#E3F2FD; color:#1565C0; }
+    .bbtn { background:linear-gradient(135deg,var(--fg),var(--fdg)); color:white; border:none; padding:8px 18px; border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; }
+    .bbtn:active { transform:scale(0.95); }
+    .ic { display:flex; align-items:center; padding:12px; margin-bottom:8px; background:#f9f9f9; border-radius:12px; border:1px solid #eee; }
+    .ie { font-size:28px; margin-right:12px; }
+    .id { flex:1; }
+    .id .n { font-weight:700; font-size:14px; }
+    .id .q { font-size:13px; color:#666; margin-top:2px; }
+    .ia { display:flex; gap:6px; }
+    .ib { padding:7px 14px; border:none; border-radius:16px; font-size:12px; font-weight:700; cursor:pointer; color:white; }
+    .ib.pl { background:#FF9800; }
+    .ib.sl { background:#E91E63; }
+    .las { display:flex; gap:10px; padding:16px; flex-wrap:wrap; justify-content:center; }
+    .lab { width:80px; height:80px; border-radius:16px; border:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:12px; font-weight:700; color:white; cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,0.15); }
+    .lab:active { transform:scale(0.92); }
+    .lab .ai { font-size:28px; }
+    .lab.pa { background:linear-gradient(135deg,#FF9800,#F57C00); }
+    .lab.wa { background:linear-gradient(135deg,#03A9F4,#0288D1); }
+    .lab.ha { background:linear-gradient(135deg,#FFC107,#FFA000); }
+    .lab.ra { background:linear-gradient(135deg,#F44336,#D32F2F); }
+    .lab.ca { background:linear-gradient(135deg,#9E9E9E,#757575); }
+    .email-item { display:flex; align-items:center; padding:12px; margin-bottom:8px; background:#f9f9f9; border-radius:12px; border:1px solid #eee; cursor:pointer; transition:all 0.15s; }
+    .email-item:active { transform:scale(0.98); background:#f0f0f0; }
+    .email-item.unread { border-left:4px solid #F44336; background:#FFF8F8; }
+    .email-item .ei { font-size:28px; margin-right:12px; }
+    .email-item .ed { flex:1; }
+    .email-item .ed .en { font-weight:700; font-size:14px; color:#333; }
+    .email-item .ed .et { font-size:11px; color:#999; margin-top:2px; }
+    .email-item .er { font-size:11px; color:#aaa; }
+    .badge { position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; background:#F44336; color:white; border-radius:8px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 4px; line-height:1; }
+    .nbtn { position:relative; }
+    .email-detail { padding:12px 16px; }
+    .email-detail h3 { font-size:18px; margin-bottom:8px; }
+    .email-detail .email-time { font-size:12px; color:#999; margin-bottom:12px; }
+    .email-detail .email-body { font-size:14px; color:#444; line-height:1.6; white-space:pre-wrap; }
+    .email-detail .email-actions { display:flex; gap:8px; margin-top:16px; }
+    .email-detail .email-actions button { flex:1; padding:10px; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; color:white; }
+    .announcement-item { padding:12px; margin-bottom:8px; background:#f9f9f9; border-radius:12px; border:1px solid #eee; }
+    .announcement-item .an { font-weight:700; font-size:14px; color:#333; margin-bottom:4px; }
+    .announcement-item .ab-type { display:inline-block; font-size:11px; padding:2px 8px; border-radius:10px; margin-right:6px; font-weight:600; }
+    .announcement-item .ab-time { font-size:11px; color:#999; }
+    .announcement-item .ac-body { font-size:13px; color:#555; margin-top:8px; line-height:1.5; }
+    .ap { max-width:480px; width:100%; min-height:100vh; background:linear-gradient(180deg,var(--st) 0%,#C8E6C9 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; }
+    .ac { background:white; border-radius:24px; padding:36px 28px; width:100%; box-shadow:0 12px 40px rgba(0,0,0,0.12); }
+    .at { text-align:center; margin-bottom:28px; }
+    .at h1 { font-size:32px; color:var(--fdg); }
+    .at .sub { color:#999; font-size:14px; margin-top:6px; }
+    .at .logo { font-size:56px; margin-bottom:8px; }
+    .fg2 { margin-bottom:14px; }
+    .fg2 label { display:block; font-size:13px; color:#666; margin-bottom:6px; font-weight:600; }
+    .fg2 input { width:100%; padding:12px 14px; border:2px solid #e0e0e0; border-radius:12px; font-size:15px; outline:none; }
+    .fg2 input:focus { border-color:var(--fg); }
+    .abs { display:flex; gap:12px; margin-top:20px; }
+    .ab { flex:1; padding:14px; border:none; border-radius:14px; font-size:16px; font-weight:700; cursor:pointer; }
+    .ab:active { transform:scale(0.97); }
+    .ab.l { background:linear-gradient(135deg,var(--fg),var(--fdg)); color:white; }
+    .ab.r { background:linear-gradient(135deg,#2196F3,#1976D2); color:white; }
+    .atl { text-align:center; margin-top:16px; }
+    .atl a { color:#2196F3; font-size:13px; cursor:pointer; text-decoration:none; }
+    .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(33,33,33,0.92); color:white; padding:10px 24px; border-radius:24px; font-size:14px; z-index:999; opacity:0; transition:opacity 0.3s; pointer-events:none; max-width:90%; text-align:center; }
+    .toast.show { opacity:1; }
+    .qp { display:flex; align-items:center; justify-content:center; gap:16px; padding:20px; }
+    .qb { width:44px; height:44px; border-radius:50%; border:2px solid #ddd; background:white; font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .qb:active { transform:scale(0.9); }
+    .qv { font-size:28px; font-weight:700; min-width:60px; text-align:center; }
+    .qcf { display:block; width:calc(100% - 32px); margin:0 16px 16px; padding:14px; background:linear-gradient(135deg,var(--fg),var(--fdg)); color:white; border:none; border-radius:14px; font-size:16px; font-weight:700; cursor:pointer; }
+    .qco { text-align:center; font-size:14px; color:#E65100; margin-bottom:8px; font-weight:600; }
+    .hdn { display:none !important; }
+  </style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<div id="authPage" class="ap">
+  <div class="ac">
+    <div class="at"><div class="logo">🌾</div><h1>忘忧农场</h1><p class="sub">种下一片属于你的田野</p></div>
+    <div class="fg2"><label>账号</label><input id="inputUsername" placeholder="3-20个字符" maxlength="20"></div>
+    <div id="nicknameGroup" class="fg2 hdn"><label>昵称</label><input id="inputNickname" placeholder="2-16个字符" maxlength="16"></div>
+    <div class="fg2"><label>密码</label><input id="inputPassword" placeholder="至少6位" type="password" maxlength="32"></div>
+    <div class="abs">
+      <button class="ab l" id="loginBtn" onclick="doLogin()">登 录</button>
+      <button class="ab r" id="registerBtn" onclick="doRegister()">注 册</button>
+    </div>
+    <div class="atl"><a id="toggleLink" onclick="toggleMode()">还没有账号？点此注册</a></div>
+  </div>
+</div>
+
+<div id="gamePage" class="gc hdn">
+  <div class="header">
+    <div class="ht"><h1>🌾 忘忧农场</h1><button class="lbtn" onclick="doLogout()">退出</button></div>
+    <div class="us">
+      <div class="si"><span>👤</span> <span id="uiNick">-</span></div>
+      <div class="si"><span>💰</span> <span id="uiGold">0</span></div>
+      <div class="si"><span>⭐</span> Lv.<span id="uiLv">1</span></div>
+    </div>
+    <div class="ebw"><div class="eb" id="expBar" style="width:0%"></div></div>
+    <div class="el">经验: <span id="uiExp">0</span>/<span id="uiExpNext">100</span></div>
+  </div>
+  <div class="fa"><div class="fg" id="farmGrid"></div></div>
+  <div class="nb" style="flex-direction:column;gap:6px;padding:8px 10px">
+    <div style="display:flex;width:100%;gap:6px">
+      <button class="nbtn s" onclick="openShop()" style="flex:1"><span class="bi">🏪</span><span class="bl">商店</span></button>
+      <button class="nbtn b" onclick="openBag()" style="flex:1"><span class="bi">🎒</span><span class="bl">背包</span></button>
+      <button class="nbtn w" onclick="openWarehouse()" style="flex:1"><span class="bi">📦</span><span class="bl">仓库</span></button>
+      <button class="nbtn lb" onclick="openLeaderboard()" style="flex:1"><span class="bi">🏆</span><span class="bl">排行</span></button>
+      <button class="nbtn fr" onclick="openFriends()" style="flex:1"><span class="bi">👥</span><span class="bl">好友</span></button>
+    </div>
+    <div style="display:flex;width:100%;gap:6px">
+      <button class="nbtn" onclick="waterAll()" style="flex:1;background:linear-gradient(135deg,#03A9F4,#0288D1)"><span class="bi">💧</span><span class="bl">一键浇水</span></button>
+      <button class="nbtn" onclick="harvestAll()" style="flex:1;background:linear-gradient(135deg,#8BC34A,#689F38)"><span class="bi">🌾</span><span class="bl">一键收获</span></button>
+      <button class="nbtn" id="emailBtn" onclick="openEmails()" style="flex:1;background:linear-gradient(135deg,#FF5722,#E64A19);position:relative"><span class="bi">📧</span><span class="bl">邮件</span></button>
+      <button class="nbtn" id="announcementBtn" onclick="openAnnouncements()" style="flex:1;background:linear-gradient(135deg,#607D8B,#455A64);position:relative"><span class="bi">📢</span><span class="bl">公告</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="shopModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2>🏪 农场商店</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div class="ct" id="catTabs"></div><div id="shopList"></div></div></div></div>
+<div class="mo" id="sellModal" style="z-index:200"><div class="ms"><div class="mh"></div><div class="mhd"><h2 id="sellTitle">出售作物</h2><button class="mc" onclick="closeSellModal()">&times;</button></div><div id="sellBody"><div class="qco" id="sellIncome" style="color:#4CAF50">收入: 0 金币</div><div style="font-size:12px;color:#888;text-align:center;margin-bottom:8px">库存: <span id="sellMax">0</span> 个</div><div class="qp"><button class="qb" onclick="changeSellQty(-1)">−</button><div class="qv" id="sellQtyValue">1</div><button class="qb" onclick="changeSellQty(1)">+</button></div><div style="display:flex;gap:8px"><button class="qcf" onclick="sellAll()" style="flex:1;background:linear-gradient(135deg,#FF9800,#F57C00)">出售全部</button><button class="qcf" onclick="confirmSell()" style="flex:1;background:linear-gradient(135deg,#4CAF50,#388E3C)">确认出售</button></div></div></div></div>
+<div class="mo" id="buyModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2 id="buyTitle">购买种子</h2><button class="mc" onclick="closeBuyModal()">&times;</button></div><div id="buyBody"><div class="qco" id="buyCost">花费: 0 金币</div><div class="qp"><button class="qb" onclick="changeQty(-1)">−</button><div class="qv" id="qtyValue">1</div><button class="qb" onclick="changeQty(1)">+</button></div><button class="qcf" onclick="confirmBuy()">确认购买</button></div></div></div>
+<div class="mo" id="bagModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2>🎒 种子背包</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div id="bagList"></div></div></div></div>
+<div class="mo" id="whModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2>📦 仓库</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div id="whList"></div></div></div></div>
+<div class="mo" id="landModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2 id="landModalTitle">土地操作</h2><button class="mc" onclick="closeModals()">&times;</button></div><div id="landModalBody"></div></div></div>
+<div class="mo" id="lbModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2>🏆 财富排行榜</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div id="lbList"></div></div></div></div>
+<div class="mo" id="frModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2>👥 好友</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div id="frContent"></div></div></div></div>
+<div class="mo" id="visitModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2 id="visitTitle">访问农场</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div id="visitGrid" class="fg" style="margin:0 auto"></div></div></div></div>
+<div class="mo" id="emailModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2>📧 邮箱</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div id="emailList"></div></div></div></div>
+<div class="mo" id="emailDetailModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2 id="emailDetailTitle">邮件详情</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div id="emailDetailContent"></div></div></div></div>
+<div class="mo" id="announcementModal"><div class="ms"><div class="mh"></div><div class="mhd"><h2>📢 公告</h2><button class="mc" onclick="closeModals()">&times;</button></div><div class="mb"><div id="announcementList"></div></div></div></div>
+<script>
+const API = location.origin + '/api';
+let token = localStorage.getItem('farm_token');
+let userInfo = null;
+let allCrops = [];
+let landsData = [];
+let isRegisterMode = false;
+let buyTarget = null;
+let buyQty = 1;
+let currentCat = '全部';
+let pendingPlantLand = null;
+let growIntervals = [];
+const CE = {'蔬菜':'🥬','水果':'🍎','粮食':'🌾','花卉':'🌸','药材':'🌿','特殊':'✨'};
+const SI = {empty:'🟫',planting:'🌱',growing:'🌿',mature:'✨',withered:'🥀'};
+
+function showMsg(t,ms=2500){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),ms);}
+async function api(p,m='GET',b){const o={method:m,headers:{'Content-Type':'application/json'}};if(token)o.headers['Authorization']='Bearer '+token;if(b)o.body=JSON.stringify(b);const r=await fetch(API+p,o);if(r.status===401){token=null;localStorage.removeItem('farm_token');location.reload();return{code:401};}return await r.json();}
+function fmt(s){if(s<60)return s+'秒';const m=Math.floor(s/60),ss=s%60;return ss>0?m+'分'+ss+'秒':m+'分钟';}
+function expNext(lv){return Math.floor(100*Math.pow(1.2,lv-1));}
+
+function showRegisterForm(){
+  isRegisterMode=true;
+  document.getElementById('nicknameGroup').classList.remove('hdn');
+  document.getElementById('loginBtn').textContent='返回登录';
+  document.getElementById('registerBtn').textContent='确认注册';
+  document.getElementById('toggleLink').textContent='';
+}
+function showLoginForm(){
+  isRegisterMode=false;
+  document.getElementById('nicknameGroup').classList.add('hdn');
+  document.getElementById('loginBtn').textContent='登 录';
+  document.getElementById('registerBtn').textContent='注 册';
+  document.getElementById('toggleLink').textContent='还没有账号？点此注册';
+}
+function toggleMode(){
+  if(isRegisterMode) showLoginForm(); else showRegisterForm();
+}
+async function doLogin(){
+  if(isRegisterMode){showLoginForm();return;}
+  const u=document.getElementById('inputUsername').value.trim();
+  const p=document.getElementById('inputPassword').value;
+  if(!u||!p)return showMsg('请输入账号和密码');
+  const r=await api('/auth/login','POST',{username:u,password:p});
+  showMsg(r.message);
+  if(r.code===200){token=r.data.token;localStorage.setItem('farm_token',token);userInfo=r.data.user;enterGame();}
+}
+async function doRegister(){
+  if(!isRegisterMode){showRegisterForm();return;}
+  const u=document.getElementById('inputUsername').value.trim();
+  const p=document.getElementById('inputPassword').value;
+  const n=document.getElementById('inputNickname').value.trim();
+  if(!u||!p)return showMsg('请输入账号和密码');
+  if(!n)return showMsg('请输入昵称');
+  const r=await api('/auth/register','POST',{username:u,nickname:n,password:p});
+  showMsg(r.message);
+  if(r.code===200){token=r.data.token;localStorage.setItem('farm_token',token);userInfo=r.data.user;enterGame();}
+}
+function doLogout(){token=null;localStorage.removeItem('farm_token');location.reload();}
+async function enterGame(){document.getElementById('authPage').classList.add('hdn');document.getElementById('gamePage').classList.remove('hdn');await refresh();await fetchEvents();}
+async function fetchEvents(){
+  try{
+    const r=await api('/farm/events');
+    activeEvents=(r.data||[]).filter(e=>e.type==='growth');
+  }catch(e){activeEvents=[];}
+}
+function getEventBonus(){
+  let bonus=0;
+  activeEvents.forEach(e=>{bonus+=e.bonus;});
+  return Math.min(bonus, 0.8);  // 最高80%加速
+}
+async function refresh(){
+  const pr=await api('/auth/profile');if(pr.code===401)return;
+  userInfo=pr.data;updateUserUI();
+  if(!allCrops.length){const cr=await api('/shop/crops');if(cr.data)allCrops=cr.data;}
+  const lr=await api('/farm/lands');if(lr.data){landsData=lr.data;renderLands();}
+}
+function updateUserUI(){
+  document.getElementById('uiNick').textContent=userInfo.nickname;
+  document.getElementById('uiGold').textContent=userInfo.gold.toLocaleString();
+  document.getElementById('uiLv').textContent=userInfo.level;
+  const n=expNext(userInfo.level);
+  document.getElementById('uiExp').textContent=userInfo.experience;
+  document.getElementById('uiExpNext').textContent=n;
+  document.getElementById('expBar').style.width=Math.min(100,(userInfo.experience/n)*100)+'%';
+}
+function getGrowthInfo(land){
+  if(!land||!land.crop_id||!land.planted_at)return null;
+  const crop=allCrops.find(c=>c.id===land.crop_id);if(!crop)return null;
+  const planted=new Date(land.planted_at.includes('T')?land.planted_at:land.planted_at.replace(' ','T')+'Z').getTime();
+  const total=crop.growth_time*1000;
+  const elapsed=Date.now()-planted;
+  const wb=land.watered_at?0.3:0;
+  const eventBonus=getEventBonus();
+  const eff=total*(1-wb)*(1-eventBonus);
+  const pct=Math.min(100,(elapsed/eff)*100);
+  const rem=Math.max(0,Math.ceil((eff-elapsed)/1000));
+  const stage=pct>=100?'mature':pct>=50?'growing':'planting';
+  let icon;
+  if(pct>=100) icon=crop.stage3_icon||crop.seed_icon;
+  else if(pct>=50) icon=crop.stage2_icon||crop.stage1_icon||crop.seed_icon;
+  else icon=crop.stage1_icon||crop.seed_icon;
+  return{crop,pct,remaining:rem,stage,total:eff,icon};
+}
+function renderLands(){
+  const g=document.getElementById('farmGrid');g.innerHTML='';
+  growIntervals.forEach(clearInterval);growIntervals=[];
+  for(let i=1;i<=12;i++){
+    const land=landsData.find(l=>l.land_index===i);
+    const d=document.createElement('div');
+    const info=land?getGrowthInfo(land):null;
+    const status=info?info.stage:(land?land.status:'empty');
+    d.className='land '+status;
+    const cn=land&&land.crop_name?land.crop_name:'';
+    const icon=(info&&info.icon)?info.icon:(SI[status]||'🟫');
+    let ph=info&&status!=='mature'?`<div class="pm" style="width:${info.pct}%"></div>`:'';
+    let th=info&&status!=='mature'?`<div class="cn" style="font-size:10px;color:#555">⏱${fmt(info.remaining)}</div>`:'';
+    d.innerHTML=`<div class="icon">${icon}</div><div class="cn">${cn||'空地'}</div>${th}<div class="li">#${i}</div>${ph}`;
+    d.onclick=()=>handleLandClick(i,land);
+    g.appendChild(d);
+    if(info&&status!=='mature'){
+      const iv=setInterval(()=>{
+        const ni=getGrowthInfo(land);if(!ni)return;
+        const bar=d.querySelector('.pm');if(bar)bar.style.width=ni.pct+'%';
+        const tel=d.querySelectorAll('.cn')[1];
+        if(tel&&ni.remaining>0)tel.textContent='⏱'+fmt(ni.remaining);
+        if(ni.pct>=100){clearInterval(iv);renderLands();}
+      },1000);
+      growIntervals.push(iv);
+    }
+  }
+}
+async function handleLandClick(idx,land){
+  const info=land?getGrowthInfo(land):null;
+  const status=info?info.stage:(land?land.status:'empty');
+  const body=document.getElementById('landModalBody');
+  document.getElementById('landModalTitle').textContent='土地 #'+idx;
+  let h='<div class="las">';
+  if(status==='empty'){h+=`<button class="lab pa" onclick="openBagForPlant(${idx})"><span class="ai">🌱</span>种植</button>`;}
+  else if(status==='mature'){h+=`<button class="lab ha" onclick="doHarvest(${idx})"><span class="ai">🌾</span>收获</button>`;}
+  else{h+=`<button class="lab wa" onclick="doWater(${idx})"><span class="ai">💧</span>浇水</button><button class="lab ra" onclick="doRemove(${idx})"><span class="ai">🗑️</span>拔掉</button>`;}
+  h+=`<button class="lab ca" onclick="closeModals()"><span class="ai">✖</span>取消</button></div>`;
+  body.innerHTML=h;
+  document.getElementById('landModal').classList.add('show');
+}
+async function doWater(i){const r=await api('/farm/water','POST',{landIndex:i});showMsg(r.message);closeModals();await refresh();}
+async function doHarvest(i){const r=await api('/farm/harvest','POST',{landIndex:i});showMsg(r.message);closeModals();await refresh();}
+async function doRemove(i){if(!confirm('确定要拔掉这棵作物吗？'))return;const r=await api('/farm/remove','POST',{landIndex:i});showMsg(r.message);closeModals();await refresh();}
+
+// Shop
+async function openShop(){
+  if(!allCrops.length){const r=await api('/shop/crops');if(r.data)allCrops=r.data;}
+  renderShopCategories();renderShopList();
+  document.getElementById('shopModal').classList.add('show');
+}
+function renderShopCategories(){
+  const cats=['全部',...new Set(allCrops.map(c=>c.category))];
+  document.getElementById('catTabs').innerHTML=cats.map(c=>
+    `<button class="ctt${c===currentCat?' a':''}" onclick="currentCat='${c}';renderShopCategories();renderShopList();">${c}</button>`
+  ).join('');
+}
+function renderShopList(){
+  const items=currentCat==='全部'?allCrops:allCrops.filter(c=>c.category===currentCat);
+  document.getElementById('shopList').innerHTML=items.map(c=>
+    `<div class="cc"><div class="ce">${c.stage3_icon||c.seed_icon||c.stage3_icon||c.seed_icon||CE[c.category]||'🌱'}</div><div class="cd"><div class="n">${c.name}</div><div class="m">${c.category}</div><div class="pr"><span class="pt pb">购买 💰${c.buy_price}</span><span class="pt ps">出售 💰${c.sell_price}</span><span class="pt pti">⏱${fmt(c.growth_time)}</span><span class="pt" style="background:#F3E5F5;color:#7B1FA2">+${c.experience}exp</span></div></div><button class="bbtn" onclick="openBuyModal(${c.id},'${c.name}',${c.buy_price})">购买</button></div>`
+  ).join('');
+}
+function openBuyModal(id,name,price){
+  buyTarget={id,name,price};buyQty=1;
+  document.getElementById('buyTitle').textContent='购买 '+name;
+  document.getElementById('qtyValue').textContent='1';
+  document.getElementById('buyCost').textContent='花费: '+price+' 金币';
+  document.getElementById('buyModal').classList.add('show');
+}
+function changeQty(d){buyQty=Math.max(1,buyQty+d);document.getElementById('qtyValue').textContent=buyQty;document.getElementById('buyCost').textContent='花费: '+(buyQty*buyTarget.price)+' 金币';}
+async function confirmBuy(){
+  if(!buyTarget)return;
+  const r=await api('/shop/buy','POST',{cropId:buyTarget.id,quantity:buyQty});
+  showMsg(r.message);
+  if(r.code===200){closeBuyModal();await refresh();}
+}
+function closeBuyModal(){document.getElementById('buyModal').classList.remove('show');}
+
+// Bag
+async function openBag(){
+  const r=await api('/farm/bag');
+  const list=document.getElementById('bagList');
+  if(!r.data||!r.data.length){list.innerHTML='<div class="mo"><div class="empty-icon">🎒</div><p>背包空空如也</p></div>';}
+  else{list.innerHTML=r.data.map(b=>
+    `<div class="ic"><div class="ie">${b.seed_icon||CE[b.crop_category]||'🌱'}</div><div class="id"><div class="n">${b.crop_name}</div><div class="q">数量: ${b.quantity}</div></div><div class="ia"><button class="ib pl" onclick="openBagForPlant(null,${b.crop_id})">种植</button></div></div>`
+  ).join('');}
+  document.getElementById('bagModal').classList.add('show');
+}
+async function openBagForPlant(landIdx,cropId){
+  if(landIdx)pendingPlantLand=landIdx;
+  if(cropId&&pendingPlantLand){
+    const r=await api('/farm/plant','POST',{landIndex:pendingPlantLand,cropId});
+    showMsg(r.message);closeModals();pendingPlantLand=null;await refresh();return;
+  }
+  closeModals();
+  const r=await api('/farm/bag');
+  const list=document.getElementById('bagList');
+  if(!r.data||!r.data.length){
+    list.innerHTML='<div style="text-align:center;padding:20px;"><div style="font-size:48px;">🎒</div><p>背包空空如也，去商店买种子吧！</p></div>';
+  }else{
+    let header='<div style="padding:8px;color:#666;font-size:13px;">选择种子种植到土地 #'+pendingPlantLand+'</div>';
+    list.innerHTML=header+r.data.map(b=>
+      `<div class="ic"><div class="ie">${b.seed_icon||CE[b.crop_category]||'🌱'}</div><div class="id"><div class="n">${b.crop_name}</div><div class="q">数量: ${b.quantity}</div></div><div class="ia"><button class="ib pl" onclick="plantCrop(${b.crop_id})">种植</button></div></div>`
+    ).join('');
+  }
+  document.getElementById('bagModal').classList.add('show');
+}
+async function plantCrop(cropId){
+  if(!pendingPlantLand)return showMsg('请先点击一块空地');
+  const r=await api('/farm/plant','POST',{landIndex:pendingPlantLand,cropId});
+  showMsg(r.message);closeModals();pendingPlantLand=null;await refresh();
+}
+
+// Warehouse
+async function openWarehouse(){
+  const r=await api('/farm/warehouse');
+  const list=document.getElementById('whList');
+  if(!r.data||!r.data.length){list.innerHTML='<div class="mo"><div class="empty-icon">📦</div><p>仓库空空如也</p></div>';}
+  else{list.innerHTML=r.data.map(w=>
+    `<div class="ic"><div class="ie">${w.stage3_icon||w.seed_icon||CE[w.crop_category]||'📦'}</div><div class="id"><div class="n">${w.crop_name}</div><div class="q">数量: ${w.quantity} · 售价 💰${w.sell_price}/个</div></div><div class="ia"><button class="ib sl" onclick="openSellModal(${w.crop_id},'${w.crop_name}',${w.sell_price},${w.quantity})">出售</button></div></div>`
+  ).join('');}
+  document.getElementById('whModal').classList.add('show');
+}
+let sellTarget={cropId:null,price:0,max:0};
+let sellQty=1;
+function openSellModal(cropId,name,price,max){
+  closeModals();
+  sellTarget={cropId,price,max};
+  sellQty=1;
+  document.getElementById('sellTitle').textContent='出售 '+name;
+  document.getElementById('sellQtyValue').textContent='1';
+  document.getElementById('sellMax').textContent=max;
+  document.getElementById('sellIncome').textContent='收入: '+price+' 金币';
+  document.getElementById('sellModal').classList.add('show');
+}
+function changeSellQty(d){
+  sellQty=Math.max(1,Math.min(sellTarget.max,sellQty+d));
+  document.getElementById('sellQtyValue').textContent=sellQty;
+  document.getElementById('sellIncome').textContent='收入: '+(sellQty*sellTarget.price)+' 金币';
+}
+async function confirmSell(){
+  const r=await api('/shop/sell','POST',{cropId:sellTarget.cropId,quantity:sellQty});
+  showMsg(r.message);closeSellModal();await refresh();
+}
+async function sellAll(){
+  const r=await api('/shop/sell','POST',{cropId:sellTarget.cropId,quantity:sellTarget.max});
+  showMsg(r.message);closeSellModal();await refresh();
+}
+function closeSellModal(){document.getElementById('sellModal').classList.remove('show');}
+// ===== 一键浇水 =====
+async function waterAll(){
+  const r=await api('/farm/waterAll','POST');
+  showMsg(r.message);await refresh();
+}
+// ===== 一键收获 =====
+async function harvestAll(){
+  const r=await api('/farm/harvestAll','POST');
+  showMsg(r.message);await refresh();
+}
+
+function openModal(id){document.getElementById(id).classList.add('show');}
+// ===== 排行榜 =====
+async function openLeaderboard(){
+  openModal('lbModal');
+  const r=await api('/farm/leaderboard');
+  if(!r.data)return;
+  document.getElementById('lbList').innerHTML=r.data.map((u,i)=>{
+    const medals=['🥇','🥈','🥉'];
+    const medal=i<3?medals[i]:(i+1)+'.';
+    const isMe=u.id===userInfo.id;
+    return '<div class="cc" style="'+(isMe?'background:#FFF3E0;border:2px solid #FF9800;':'')+'"><div class="ce">'+medal+'</div><div class="cd"><div class="n">'+u.nickname+'</div><div class="m">Lv.'+u.level+'</div></div><div style="font-size:14px;color:#F57C00">💰'+u.gold.toLocaleString()+'</div></div>';
+  }).join('');
+}
+// ===== 好友系统 =====
+async function openFriends(){
+  openModal('frModal');
+  const r=await api('/farm/friends/list');
+  if(!r.data)return;
+  const {friends,requests}=r.data;
+  let h='<div style="margin-bottom:12px"><div style="display:flex;gap:8px"><input id="searchFrInput" placeholder="🔍 搜索用户昵称..." oninput="searchUsers()" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:14px"></div><div id="searchResults" style="margin-top:8px"></div></div>';
+  if(requests.length){
+    h+='<div style="font-size:13px;color:#888;margin-bottom:8px">📬 好友请求</div>';
+    requests.forEach(u=>{
+      h+='<div class="cc"><div class="ce">📩</div><div class="cd"><div class="n">'+u.nickname+'</div><div class="m">Lv.'+u.level+' 💰'+u.gold.toLocaleString()+'</div></div><button class="bbtn" onclick="acceptFriend('+u.id+')" style="background:#4CAF50">接受</button><button class="bbtn" onclick="rejectFriend('+u.id+')" style="background:#9E9E9E;margin-left:4px">拒绝</button></div>';
+    });
+  }
+  h+='<div style="font-size:13px;color:#888;margin:12px 0 8px">👥 我的好友 ('+friends.length+')</div>';
+  if(!friends.length)h+='<div style="text-align:center;color:#aaa;padding:20px">还没有好友~<br><span style="font-size:12px">搜索上方框添加好友吧！</span></div>';
+  friends.forEach(u=>{
+    h+='<div class="cc"><div class="ce">🧑‍🌾</div><div class="cd"><div class="n">'+u.nickname+'</div><div class="m">Lv.'+u.level+' 💰'+u.gold.toLocaleString()+'</div></div><button class="bbtn" data-uid="'+u.id+'" data-uname="'+u.nickname+'" onclick="visitFarm(this.dataset.uid,this.dataset.uname)">访问</button><button class="bbtn" onclick="removeFriend('+u.id+')" style="background:#E53935;margin-left:4px">删除</button></div>';
+  });
+  document.getElementById('frContent').innerHTML=h;
+}
+let searchTimer=null;
+async function searchUsers(){
+  clearTimeout(searchTimer);
+  const q=document.getElementById('searchFrInput').value.trim();
+  if(!q){document.getElementById('searchResults').innerHTML='';return;}
+  searchTimer=setTimeout(async()=>{
+    const r=await api('/farm/search?q='+encodeURIComponent(q));
+    if(!r.data||!r.data.length){document.getElementById('searchResults').innerHTML='<div style="text-align:center;color:#aaa;padding:8px;font-size:13px">未找到该用户</div>';return;}
+    document.getElementById('searchResults').innerHTML=r.data.map(u=>{
+      let btn='';
+      if(u.friendStatus==='none')btn='<button class="bbtn" onclick="addFriendById('+u.id+')" style="background:#4CAF50;font-size:12px">+加好友</button>';
+      else if(u.friendStatus==='pending')btn='<span style="color:#FF9800;font-size:12px">已申请</span>';
+      else if(u.friendStatus==='accepted')btn='<span style="color:#4CAF50;font-size:12px">已是好友</span>';
+      return '<div class="cc" style="padding:6px 8px;margin-bottom:4px"><div class="ce" style="font-size:20px">👤</div><div class="cd"><div class="n" style="font-size:13px">'+u.nickname+'</div><div class="m">Lv.'+u.level+' 💰'+u.gold.toLocaleString()+'</div></div>'+btn+'</div>';
+    }).join('');
+  },300);
+}
+async function addFriendById(uid){
+  await api('/farm/friends/add','POST',{friendId:uid});
+  showMsg('好友请求已发送！');
+  searchUsers();
+}
+async function acceptFriend(uid){
+  await api('/farm/friends/accept','POST',{friendId:uid});
+  openFriends();
+}
+async function rejectFriend(uid){
+  await api('/farm/friends/reject','POST',{friendId:uid});
+  openFriends();
+}
+async function removeFriend(uid){
+  if(!confirm('确定删除该好友？'))return;
+  await api('/farm/friends/remove','DELETE',{friendId:uid});
+  openFriends();
+}
+// ===== 访问好友农场 =====
+async function visitFarm(userId,nickname){
+  closeModals();
+  openModal('visitModal');
+  document.getElementById('visitTitle').textContent='🌾 '+nickname+' 的农场';
+  const r=await api('/farm/visit/'+userId);
+  if(!r.data)return;
+  const {user,lands,stolenLandIndices}=r.data;
+  const grid=document.getElementById('visitGrid');
+  grid.innerHTML='';
+  for(let i=1;i<=12;i++){
+    const land=lands.find(l=>l.land_index===i);
+    const d=document.createElement('div');
+    d.className='land '+(land?land.status:'empty');
+    d.style.cssText='width:80px;height:80px;margin:4px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;font-size:28px;background:#f5f5f5;border:2px solid #ddd;opacity:0.85;cursor:default';
+    if(land&&land.crop_id){
+      const crop=allCrops.find(c=>String(c.id)===String(land.crop_id));
+      if(crop){
+        const planted=new Date(String(land.planted_at).includes('T')?land.planted_at:String(land.planted_at).replace(' ','T')+'Z').getTime();
+        const total=(crop.growth_time||300)*1000;
+        const elapsed=Date.now()-planted;
+        const wb=land.watered_at?0.3:0;
+        const eventBonus=getEventBonus();
+        const eff=total*(1-wb)*(1-eventBonus);
+        const pct=Math.min(100,(elapsed/eff)*100);
+        let icon=pct>=100?(crop.stage3_icon||crop.seed_icon):(pct>=50?(crop.stage2_icon||crop.seed_icon):(crop.stage1_icon||crop.seed_icon));
+        const stolen=stolenLandIndices.includes(i);
+        if(pct>=100&&stolen){
+          d.innerHTML='<div class="icon">'+icon+'</div><div style="font-size:10px;color:#999">已偷过</div>';
+          d.style.opacity='0.5';
+        }else if(pct>=100){
+          d.innerHTML='<div class="icon">'+icon+'</div><div style="font-size:10px;color:#666">'+crop.name+'</div><button onclick="stealCrop('+userId+','+i+')" style="margin-top:2px;padding:2px 8px;font-size:11px;background:#FF9800;color:#fff;border:none;border-radius:6px;cursor:pointer">偷菜</button>';
+        }else{
+          d.innerHTML='<div class="icon">'+icon+'</div><div style="font-size:10px;color:#666">'+crop.name+'</div>';
+        }
+      }else{
+        d.innerHTML='<div class="icon">🌱</div><div style="font-size:10px;color:#666">种植中</div>';
+      }
+    }else{
+      d.innerHTML='<div class="icon" style="font-size:24px">🟫</div><div style="font-size:10px;color:#999">空地</div>';
+    }
+    grid.appendChild(d);
+  }
+}
+async function stealCrop(victimId,landIndex){
+  const r=await api('/farm/steal','POST',{victimId,landIndex});
+  alert(r.message||'操作完成');
+  if(r.code===200)visitFarm(victimId,document.getElementById('visitTitle').textContent.replace('🌾 ','').replace(' 的农场',''));
+}
+function closeModals(){document.querySelectorAll('.mo').forEach(m=>m.classList.remove('show'));}
+document.querySelectorAll('.mo').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)closeModals();});});
+// ===== 邮件系统 =====
+let unreadEmailCount=0;
+async function openEmails(){
+  const r=await api('/farm/emails');
+  const list=document.getElementById('emailList');
+  if(!r.data||!r.data.length){
+    list.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:48px">📭</div><p>没有邮件</p></div>';
+  }else{
+    list.innerHTML=r.data.map(e=>{
+      const icon=e.type==='reward'?'🎁':e.type==='admin'?'📨':'📬';
+      const time=new Date(e.created_at).toLocaleString('zh-CN');
+      const cls=e.is_read?'':' unread';
+      return '<div class="email-item'+cls+'" onclick="openEmailDetail('+e.id+','+e.is_read+')"><div class="ei">'+icon+'</div><div class="ed"><div class="en">'+e.title+'</div><div class="et">'+time+'</div></div>'+(e.is_read?'':'<div style="width:8px;height:8px;background:#F44336;border-radius:50%"></div>')+'</div>';
+    }).join('');
+  }
+  document.getElementById('emailModal').classList.add('show');
+}
+async function openEmailDetail(emailId,isRead){
+  const r=await api('/farm/emails');
+  const email=r.data.find(e=>e.id===emailId);
+  if(!email)return;
+  if(!isRead){
+    await api('/farm/emails/read','POST',{emailId:emailId});
+    unreadEmailCount=Math.max(0,unreadEmailCount-1);
+    updateEmailBadge();
+  }
+  const typeLabel={system:'系统邮件',admin:'管理员邮件',reward:'奖励邮件'};
+  const typeColor={system:'#2196F3',admin:'#9C27B0',reward:'#4CAF50'};
+  const type=email.type||'system';
+  let h='<div class="email-detail"><h3>'+email.title+'</h3><div class="email-time">'+new Date(email.created_at).toLocaleString('zh-CN')+' · <span style="color:'+typeColor[type]+'">'+(typeLabel[type]||'系统')+'</span></div><div class="email-body">'+(email.content||'无内容')+'</div>';
+  if(email.items){
+    try{
+      const items=typeof email.items==='string'?JSON.parse(email.items):email.items;
+      if(Array.isArray(items)&&items.length){
+        h+='<div style="margin-top:12px;padding:12px;background:#FFF3E0;border-radius:12px"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:6px">🎁 附件奖励</div>';
+        items.forEach(item=>{
+          const crop=item.cropId?allCrops.find(c=>c.id===item.cropId):null;
+          const name=item.name||(crop?crop.name:'奖励');
+          const qty=item.type==='gold'?(item.amount||0):(item.quantity||0);
+          const icon=item.type==='gold'?'💰':item.type==='seed'?'🌱':'📦';
+          h+='<div style="font-size:13px;color:#333">'+icon+' '+name+' x'+qty+'</div>';
+        });
+        h+='<button onclick="claimEmailItem('+email.id+')" style="width:100%;margin-top:12px;padding:12px;background:linear-gradient(135deg,#4CAF50,#388E3C);color:white;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">🎁 领取附件</button>';
+        h+='</div>';
+      }
+    }catch(e){}
+  }
+  h+='<div class="email-actions"><button onclick="deleteEmail('+email.id+')" style="background:linear-gradient(135deg,#F44336,#D32F2F)">删除邮件</button><button onclick="closeModals()" style="background:linear-gradient(135deg,#9E9E9E,#757575)">关闭</button></div></div>';
+  document.getElementById('emailDetailContent').innerHTML=h;
+  document.getElementById('emailDetailModal').classList.add('show');
+}
+async function claimEmailItem(emailId){
+  const r=await api('/farm/emails/claim','POST',{emailId});
+  showMsg(r.message);
+  if(r.code===200){
+    await refresh();
+    closeModals();
+    setTimeout(()=>openEmails(),300);
+  }
+}
+async function deleteEmail(emailId){
+  await api('/farm/emails/delete','DELETE',{emailId});
+  closeModals();
+  openEmails();
+}
+function updateEmailBadge(){
+  const btn=document.getElementById('emailBtn');
+  let badge=btn.querySelector('.badge');
+  if(unreadEmailCount>0){
+    if(!badge){badge=document.createElement('div');badge.className='badge';btn.appendChild(badge);}
+    badge.textContent=unreadEmailCount>99?'99+':unreadEmailCount;
+  }else if(badge){badge.remove();}
+}
+async function checkUnreadEmails(){
+  const r=await api('/farm/emails');
+  if(r.data){
+    unreadEmailCount=r.data.filter(e=>!e.is_read).length;
+    updateEmailBadge();
+  }
+}
+// ===== 公告系统 =====
+let lastAnnouncementId=0;
+async function openAnnouncements(){
+  const r=await api('/farm/announcements');
+  const list=document.getElementById('announcementList');
+  if(!r.data||!r.data.length){
+    list.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:48px">📢</div><p>暂无公告</p></div>';
+  }else{
+    const typeLabel={update:'更新',event:'活动',notice:'通知'};
+    const typeColor={update:'#2196F3',event:'#FF9800',notice:'#4CAF50'};
+    list.innerHTML=r.data.map(a=>{
+      const t=a.type||'notice';
+      return '<div class="announcement-item"><div class="an">'+a.title+'</div><div><span class="ab-type" style="background:'+typeColor[t]+'22;color:'+typeColor[t]+'">'+(typeLabel[t]||'通知')+'</span><span class="ab-time">'+new Date(a.created_at).toLocaleString('zh-CN')+'</span></div><div class="ac-body">'+(a.content||'')+'</div></div>';
+    }).join('');
+    // update last seen
+    if(r.data.length){
+      lastAnnouncementId=r.data[0].id;
+      localStorage.setItem('farm_last_announcement',lastAnnouncementId);
+      updateAnnouncementBadge();
+    }
+  }
+  document.getElementById('announcementModal').classList.add('show');
+}
+function updateAnnouncementBadge(){
+  const btn=document.getElementById('announcementBtn');
+  let badge=btn.querySelector('.badge');
+  const stored=parseInt(localStorage.getItem('farm_last_announcement')||'0');
+  if(lastAnnouncementId>stored){
+    if(!badge){badge=document.createElement('div');badge.className='badge';btn.appendChild(badge);}
+    badge.textContent='!';
+  }else if(badge){badge.remove();}
+}
+async function checkNewAnnouncements(){
+  const r=await api('/farm/announcements');
+  if(r.data&&r.data.length){
+    lastAnnouncementId=r.data[0].id;
+    const stored=parseInt(localStorage.getItem('farm_last_announcement')||'0');
+    if(lastAnnouncementId>stored&&!document.querySelector('#announcementBtn .badge')){
+      updateAnnouncementBadge();
+    }
+  }
+}
+document.querySelectorAll('.mo').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)closeModals();});});
+
+// Init
+if(token){api('/auth/profile').then(r=>{if(r.code===200){enterGame();fetchEvents();checkUnreadEmails();checkNewAnnouncements();}else{token=null;localStorage.removeItem('farm_token');}});}
+</script>
+</body>
+</html>
