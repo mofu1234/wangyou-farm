@@ -6,6 +6,12 @@
 ![Node.js](https://img.shields.io/badge/node-%3E%3D16.0-green.svg)
 ![MySQL](https://img.shields.io/badge/mysql-%3E%3D8.0-blue.svg)
 
+## 🎮 在线体验
+
+**👉 [立即体验忘忧农场](https://forget.icu/farm/)**
+
+> 无需安装，打开浏览器即可畅玩！
+
 ## ✨ 功能特性
 
 ### 🎮 游戏功能
