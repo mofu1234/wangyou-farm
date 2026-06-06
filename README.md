@@ -85,7 +85,7 @@ wangyou-farm/
 ├── docs/                     # 文档
 │   └── DEPLOY.md
 ├── index.html                # 游戏主页面
-├── mofu.html                 # 管理后台页面
+├── admin.html                # 管理后台页面
 ├── .gitignore
 ├── .env.example
 ├── LICENSE
@@ -198,7 +198,7 @@ npm run dev
 ### 7. 访问游戏
 
 - **游戏页面**: http://localhost:3000
-- **管理后台**: http://localhost:3000/mofu.html
+- **管理后台**: http://localhost:3000/admin.html
 - **健康检查**: http://localhost:3000/api/health
 
 ## 📚 API 文档

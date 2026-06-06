@@ -514,7 +514,7 @@ router.post('/admin/login', authLimiter, async (req, res) => {
     if (!username || !password) {
       return res.json({ code: 400, message: '账号和密码不能为空' });
     }
-    const adminUser = process.env.ADMIN_USERNAME || 'mofu';
+    const adminUser = process.env.ADMIN_USERNAME || 'admin';
     const adminHash = process.env.ADMIN_PASSWORD_HASH;
     if (!adminHash || username !== adminUser) {
       return res.json({ code: 401, message: '账号或密码错误' });
